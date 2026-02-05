@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Deli 💕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #ffe4ec 0%, #ffb6c1 50%, #ff91a4 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Floating decorations */
+        .floating-decor {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            animation: float 6s ease-in-out infinite;
+            font-size: 2rem;
+            opacity: 0.7;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Intro Screen */
+        .intro-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 30px;
+            padding: 50px 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(219, 112, 147, 0.3);
+            max-width: 500px;
+            position: relative;
+        }
+
+        .intro-decor {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .intro-card h1 {
+            color: #e75480;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .intro-card p {
+            color: #8b5a6b;
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #ff6b9d, #e75480);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            box-shadow: 0 10px 30px rgba(231, 84, 128, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(231, 84, 128, 0.5);
+        }
+
+        /* Game Screen */
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(219, 112, 147, 0.3);
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .game-header h2 {
+            color: #e75480;
+            font-size: 1.5rem;
+        }
+
+        .game-header p {
+            color: #8b5a6b;
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        .maze-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #maze {
+            display: grid;
+            gap: 0;
+            border: 4px solid #e75480;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .cell {
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: background 0.2s;
+        }
+
+        .wall {
+            background: linear-gradient(135deg, #ffb6c1, #ff91a4);
+        }
+
+        .path {
+            background: #fff5f7;
+        }
+
+        .player {
+            font-size: 1.8rem;
+            animation: catWiggle 0.6s ease infinite;
+        }
+
+        @keyframes catWiggle {
+            0%, 100% { transform: rotate(-3deg) scale(1); }
+            50% { transform: rotate(3deg) scale(1.05); }
+        }
+
+        .key-cell {
+            font-size: 1.6rem;
+            animation: keyGlow 1s ease-in-out infinite;
+        }
+
+        @keyframes keyGlow {
+            0%, 100% { 
+                filter: drop-shadow(0 0 5px #ffb347);
+                transform: scale(1);
+            }
+            50% { 
+                filter: drop-shadow(0 0 15px gold);
+                transform: scale(1.15);
+            }
+        }
+
+        .collectible {
+            font-size: 1.5rem;
+            animation: collectibleBounce 1s ease-in-out infinite;
+        }
+
+        @keyframes collectibleBounce {
+            0%, 100% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 3px #ff91a4);
+            }
+            50% { 
+                transform: scale(1.2);
+                filter: drop-shadow(0 0 10px #ff6b9d);
+            }
+        }
+
+        .decor-cell {
+            opacity: 0.8;
+        }
+
+        .controls-hint {
+            text-align: center;
+            margin-top: 15px;
+            color: #8b5a6b;
+            font-size: 0.9rem;
+        }
+
+        .mobile-controls {
+            display: none;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 8px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .mobile-btn {
+            background: linear-gradient(135deg, #ff6b9d, #e75480);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.1s;
+            box-shadow: 0 4px 15px rgba(231, 84, 128, 0.3);
+        }
+
+        .mobile-btn:active {
+            transform: scale(0.9);
+        }
+
+        .mobile-btn.empty {
+            background: transparent;
+            box-shadow: none;
+        }
+
+        /* Final Screen */
+        .final-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 30px;
+            padding: 50px 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(219, 112, 147, 0.4);
+            max-width: 550px;
+            animation: revealCard 1s ease-out;
+        }
+
+        @keyframes revealCard {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .final-card .big-heart {
+            font-size: 5rem;
+            animation: heartbeat 1s ease-in-out infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            15% { transform: scale(1.15); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.1); }
+        }
+
+        .final-card h1 {
+            color: #e75480;
+            font-size: 2.2rem;
+            margin: 20px 0;
+        }
+
+        .final-card .message {
+            color: #8b5a6b;
+            font-size: 1.15rem;
+            line-height: 1.9;
+            margin-bottom: 30px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-yes {
+            background: linear-gradient(135deg, #ff6b9d, #e75480);
+            padding: 18px 50px;
+            font-size: 1.3rem;
+        }
+
+        .btn-no {
+            background: #ccc;
+            padding: 15px 30px;
+            font-size: 1rem;
+        }
+
+        /* Celebration */
+        .celebration {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .celebration.active {
+            display: block;
+        }
+
+        .confetti {
+            position: absolute;
+            animation: confettiFall linear forwards;
+        }
+
+        @keyframes confettiFall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+            }
+        }
+
+        .question-content {
+            display: block;
+        }
+
+        .question-content.hidden {
+            display: none;
+        }
+
+        .yes-message {
+            display: none;
+            text-align: center;
+            animation: revealCard 0.5s ease-out;
+        }
+
+        .yes-message.active {
+            display: block;
+        }
+
+        .yes-message h1 {
+            color: #e75480;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .yes-message p {
+            color: #8b5a6b;
+            font-size: 1.3rem;
+        }
+
+        .yes-message .hearts-row {
+            font-size: 3rem;
+            margin-top: 20px;
+            animation: heartbeat 1s ease-in-out infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .cell {
+                width: 32px;
+                height: 32px;
+                font-size: 1.1rem;
+            }
+
+            .player {
+                font-size: 1.3rem;
+            }
+
+            .mobile-controls {
+                display: grid;
+            }
+
+            .controls-hint {
+                display: none;
+            }
+
+            .intro-card, .final-card {
+                padding: 30px 25px;
+                margin: 10px;
+            }
+
+            .intro-card h1 {
+                font-size: 2rem;
+            }
+            
+            .final-card h1 {
+                font-size: 1.8rem;
+            }
+
+            .floating-decor {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating Decorations -->
+    <div id="floating-decorations"></div>
+
+    <!-- Celebration Confetti -->
+    <div class="celebration" id="celebration"></div>
+
+    <!-- Screen 1: Intro -->
+    <div class="screen active" id="intro-screen">
+        <div class="intro-card">
+            <div class="intro-decor">🧸💐🐱💐🧸</div>
+            
+            <h1>¡Hola mi Amor! 💕</h1>
+            
+            <p>
+                Ayuda a Girasol Miau encontrar la llave a mi corazón 🔑💖<br><br>
+                ¿Estás lista?
+            </p>
+            
+            <button class="btn" onclick="startGame()">Entrar 🐱</button>
+        </div>
+    </div>
+
+    <!-- Screen 2: Game -->
+    <div class="screen" id="game-screen">
+        <div class="game-container">
+            <div class="game-header">
+                <h2>🔑 Encuentra la Llave de Mi Corazón 💖</h2>
+            </div>
+            <div class="maze-wrapper">
+                <div id="maze"></div>
+            </div>
+            <p class="controls-hint">Usa las flechas o WASD para mover 🐱</p>
+            <div class="mobile-controls">
+                <div class="mobile-btn empty"></div>
+                <button class="mobile-btn" onclick="movePlayer(0, -1)">↑</button>
+                <div class="mobile-btn empty"></div>
+                <button class="mobile-btn" onclick="movePlayer(-1, 0)">←</button>
+                <div class="mobile-btn empty"></div>
+                <button class="mobile-btn" onclick="movePlayer(1, 0)">→</button>
+                <div class="mobile-btn empty"></div>
+                <button class="mobile-btn" onclick="movePlayer(0, 1)">↓</button>
+                <div class="mobile-btn empty"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 3: Valentine Question -->
+    <div class="screen" id="final-screen">
+        <div class="final-card">
+            <div class="question-content" id="question-content">
+                <div class="big-heart">💖</div>
+                
+                <h1>Este juego fue una bobería...</h1>
+                
+                <p class="message">
+                    Has tenido la llave desde que te conocí 🔑<br><br>
+                    🧸🌸💐🌷🧸
+                </p>
+                
+                <h1 style="font-size: 1.8rem; margin-bottom: 25px;">¿Quieres ser mi San Valentín? 💕</h1>
+                
+                <div class="btn-group">
+                    <button class="btn btn-yes" onclick="sayYes()">¡Sí! 💖</button>
+                    <button class="btn btn-yes" onclick="sayYes()">¡Sí! 💖</button>
+                </div>
+            </div>
+            <div class="yes-message" id="yes-message">
+                
+                <h1>¡¡¡Síii!!! 🎉💖🎉</h1>
+                <p>Me has hecho el hombre mas Feliz del mundo!!!🥹🥹</p>
+                <div class="hearts-row">🐱💕💖💕🐱</div>
+                
+                <p style="margin-top: 30px; font-size: 1.1rem;">¡Te amo! 🧸🌸💐</p>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Floating decorations
+        const decorations = ['💖', '🌸', '🧸', '💐', '🌷', '💕', '🌹', '🐱', '💗', '🎀'];
+        const floatingContainer = document.getElementById('floating-decorations');
+        
+        for (let i = 0; i < 20; i++) {
+            const decor = document.createElement('div');
+            decor.className = 'floating-decor';
+            decor.textContent = decorations[Math.floor(Math.random() * decorations.length)];
+            decor.style.left = Math.random() * 100 + 'vw';
+            decor.style.top = Math.random() * 100 + 'vh';
+            decor.style.animationDelay = Math.random() * 6 + 's';
+            decor.style.animationDuration = (5 + Math.random() * 4) + 's';
+            floatingContainer.appendChild(decor);
+        }
+
+        // Maze configuration
+        // 0 = path, 1 = wall, 2 = player start, 3 = key (goal), 4 = collectible
+        const mazeLayout = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 2, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+            [1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
+            [1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 1, 4, 1, 1, 1, 1, 0, 1],
+            [1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+            [1, 0, 1, 1, 1, 1, 0, 4, 0, 0, 0, 0, 1],
+            [1, 0, 0, 4, 0, 0, 0, 1, 1, 1, 1, 0, 1],
+            [1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1],
+            [1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 3, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
+
+        // Collectible emojis she needs to gather
+        const collectibleEmojis = ['🌸', '🧸', '💐'];
+        let collectedCount = 0;
+        let totalCollectibles = 3;
+        let keyRevealed = false;
+        let collectibleIndex = 0;
+
+        // Decorations to place on some path cells
+        const pathDecorations = ['💕', '🎀', '🌷', '✨'];
+        
+        let playerPos = { x: 1, y: 1 };
+        let maze = [];
+
+        function createMaze() {
+            const mazeEl = document.getElementById('maze');
+            mazeEl.innerHTML = '';
+            mazeEl.style.gridTemplateColumns = `repeat(${mazeLayout[0].length}, 1fr)`;
+            
+            maze = [];
+            collectedCount = 0;
+            keyRevealed = false;
+            collectibleIndex = 0;
+            
+            for (let y = 0; y < mazeLayout.length; y++) {
+                maze[y] = [];
+                for (let x = 0; x < mazeLayout[y].length; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${x}-${y}`;
+                    
+                    const value = mazeLayout[y][x];
+                    
+                    if (value === 1) {
+                        cell.classList.add('wall');
+                        // Add some decorations to walls
+                        if (Math.random() < 0.2) {
+                            cell.textContent = ['💗', '✨', '💕'][Math.floor(Math.random() * 3)];
+                            cell.style.fontSize = '0.9rem';
+                            cell.style.opacity = '0.6';
+                        }
+                    } else {
+                        cell.classList.add('path');
+                        
+                        if (value === 2) {
+                            playerPos = { x, y };
+                            cell.innerHTML = '<span class="player">🐱</span>';
+                        } else if (value === 3) {
+                            // Key is hidden until all collectibles are gathered
+                            cell.innerHTML = '<span class="key-cell" style="opacity: 0;">🔑💖</span>';
+                            cell.dataset.isKey = 'true';
+                        } else if (value === 4) {
+                            // Collectible item
+                            const emoji = collectibleEmojis[collectibleIndex % collectibleEmojis.length];
+                            collectibleIndex++;
+                            cell.innerHTML = `<span class="collectible">${emoji}</span>`;
+                            cell.dataset.collectible = 'true';
+                        } else if (Math.random() < 0.1) {
+                            // Random path decorations (less frequent)
+                            cell.innerHTML = `<span class="decor-cell">${pathDecorations[Math.floor(Math.random() * pathDecorations.length)]}</span>`;
+                        }
+                    }
+                    
+                    maze[y][x] = value === 1 ? 1 : 0;
+                    mazeEl.appendChild(cell);
+                }
+            }
+            
+            updateCollectibleCounter();
+        }
+        
+        function updateCollectibleCounter() {
+            const header = document.querySelector('.game-header h2');
+            if (collectedCount < totalCollectibles) {
+                header.innerHTML = `🔑 Recoge: ${collectedCount}/${totalCollectibles} 💖`;
+            } else {
+                header.innerHTML = `🔑 ¡La llave apareció! 💖`;
+            }
+        }
+        
+        function revealKey() {
+            const keyCell = document.querySelector('[data-is-key="true"] .key-cell');
+            if (keyCell) {
+                keyCell.style.opacity = '1';
+                keyCell.style.animation = 'keyGlow 1s ease-in-out infinite';
+            }
+            keyRevealed = true;
+        }
+
+        function movePlayer(dx, dy) {
+            const newX = playerPos.x + dx;
+            const newY = playerPos.y + dy;
+            
+            // Check bounds and walls
+            if (newX < 0 || newX >= mazeLayout[0].length || 
+                newY < 0 || newY >= mazeLayout.length ||
+                maze[newY][newX] === 1) {
+                return;
+            }
+            
+            const newCell = document.getElementById(`cell-${newX}-${newY}`);
+            
+            // Check if reached the key (only if revealed)
+            if (mazeLayout[newY][newX] === 3 && keyRevealed) {
+                // Win!
+                // Clear old position first
+                const oldCell = document.getElementById(`cell-${playerPos.x}-${playerPos.y}`);
+                oldCell.innerHTML = '';
+                playerPos.x = newX;
+                playerPos.y = newY;
+                newCell.innerHTML = '<span class="player">🐱</span>';
+                
+                setTimeout(() => {
+                    showScreen('final-screen');
+                }, 500);
+                return;
+            }
+            
+            // Can't reach key if not revealed
+            if (mazeLayout[newY][newX] === 3 && !keyRevealed) {
+                return;
+            }
+            
+            // Check if collecting an item
+            if (newCell.dataset.collectible === 'true') {
+                collectedCount++;
+                newCell.dataset.collectible = 'false';
+                updateCollectibleCounter();
+                
+                // Reveal key when all collected
+                if (collectedCount >= totalCollectibles) {
+                    revealKey();
+                }
+            }
+            
+            // Clear old position
+            const oldCell = document.getElementById(`cell-${playerPos.x}-${playerPos.y}`);
+            oldCell.innerHTML = '';
+            
+            // Update position
+            playerPos.x = newX;
+            playerPos.y = newY;
+            
+            // Draw at new position
+            newCell.innerHTML = '<span class="player">🐱</span>';
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('game-screen').classList.contains('active')) {
+                switch(e.key) {
+                    case 'ArrowUp':
+                    case 'w':
+                    case 'W':
+                        e.preventDefault();
+                        movePlayer(0, -1);
+                        break;
+                    case 'ArrowDown':
+                    case 's':
+                    case 'S':
+                        e.preventDefault();
+                        movePlayer(0, 1);
+                        break;
+                    case 'ArrowLeft':
+                    case 'a':
+                    case 'A':
+                        e.preventDefault();
+                        movePlayer(-1, 0);
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                    case 'D':
+                        e.preventDefault();
+                        movePlayer(1, 0);
+                        break;
+                }
+            }
+        });
+
+        // Screen management
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startGame() {
+            showScreen('game-screen');
+            createMaze();
+        }
+
+        // Say yes celebration
+        function sayYes() {
+            document.getElementById('question-content').classList.add('hidden');
+            document.getElementById('yes-message').classList.add('active');
+            
+            // Trigger celebration
+            const celebration = document.getElementById('celebration');
+            celebration.classList.add('active');
+            
+            // Create confetti
+            const confettiEmojis = ['💖', '💕', '🌸', '🧸', '💐', '🎀', '✨', '🐱', '💗', '🌷'];
+            for (let i = 0; i < 60; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.textContent = confettiEmojis[Math.floor(Math.random() * confettiEmojis.length)];
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.top = '-50px';
+                    confetti.style.fontSize = (1 + Math.random() * 2) + 'rem';
+                    confetti.style.animationDuration = (2 + Math.random() * 3) + 's';
+                    celebration.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 5000);
+                }, i * 50);
+            }
+        }
+    </script>
+</body>
+</html>
